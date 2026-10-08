@@ -125,9 +125,9 @@ def depth_first_search(problem):
     visited = set()
 
     while frontier.list:
-        poped = frontier.pop()
-        state = poped[0]
-        path = poped[1]
+        popped = frontier.pop()
+        state = popped[0]
+        path = popped[1]
 
         if state in visited:
             continue
@@ -147,8 +147,28 @@ def depth_first_search(problem):
 
 def breadth_first_search(problem):
     """Search the shallowest nodes in the search tree first."""
-    "*** YOUR CODE HERE ***"
-    util.raise_not_defined()
+
+    visited = set()
+
+    queue = util.Queue()
+
+    queue.push((problem.get_start_state(), []))
+
+    while queue.list:
+        state, path = queue.pop()
+
+        if state in visited:
+            continue
+        visited.add(state)
+
+        if problem.is_goal_state(state):
+            return path
+
+        for successor, action, cost in problem.get_successors(state):
+            if successor not in visited:
+                queue.push((successor, path + [action]))
+                
+    return []
 
 def uniform_cost_search(problem):
     """Search the node of least total cost first."""
