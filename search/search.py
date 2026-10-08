@@ -119,21 +119,29 @@ class SearchNode:
     # #     return hash(self.__state)
 
 def depth_first_search(problem):
-    """
-    Search the deepest nodes in the search tree first.
+    frontier = util.Stack()
+    start = problem.get_start_state()
+    frontier.push((start, []))
+    visited = set()
 
-    Your search algorithm needs to return a list of actions that reaches the
-    goal. Make sure to implement a graph search algorithm.
+    while frontier.list:
+        poped = frontier.pop()
+        state = poped[0]
+        path = poped[1]
 
-    To get started, you might want to try some of these simple commands to
-    understand the search problem that is being passed in:
+        if state in visited:
+            continue
+        visited.add(state)
 
-    print("Start:", problem.get_start_state())
-    print("Is the start a goal?", problem.is_goal_state(problem.get_start_state()))
-    print("Start's successors:", problem.get_successors(problem.get_start_state()))
-    """
-    "*** YOUR CODE HERE ***"
-    util.raise_not_defined()
+    
+        if problem.is_goal_state(state):
+            return path
+
+        for successor, action, cost in problem.get_successors(state):
+            if successor not in visited:
+                frontier.push((successor, path + [action]))
+
+    return []
 
 
 
