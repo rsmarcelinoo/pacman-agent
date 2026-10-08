@@ -1,0 +1,15 @@
+class: "HeuristicTest"
+
+heuristic: "food_heuristic"
+searchProblemClass: "FoodSearchProblem"
+layoutName: "Test 3"
+layout: """
+%%%%
+%  %
+%  %
+%P %
+%  %
+%  %
+%%%%
+"""
+
