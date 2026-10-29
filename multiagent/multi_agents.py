@@ -14,7 +14,7 @@
 
 from util import manhattan_distance
 from game import Directions, Actions
-from pacman import GhostRules
+from pacman import GhostRules, GameState
 import random, util
 from game import Agent
 
@@ -51,7 +51,7 @@ class ReflexAgent(Agent):
 
         return legal_moves[chosen_index]
 
-    def evaluation_function(self, current_game_state, action):
+    def evaluation_function(self, current_game_state: GameState, action):
         """
         Design a better evaluation function here.
 
@@ -74,7 +74,29 @@ class ReflexAgent(Agent):
         new_scared_times = [ghostState.scared_timer for ghostState in new_ghost_states]
         
         "*** YOUR CODE HERE ***"
-        return successor_game_state.get_score()
+
+        score = successor_game_state.get_score()
+
+        food_list = new_food.as_list()
+        if food_list:
+            nearest_food = min(manhattan_distance(new_pos, f) for f in food_list)
+            score += 1/(1.5*nearest_food + 1) #avoid division by 0
+
+        for ghost, scared in zip(new_ghost_states, new_scared_times):
+            d = manhattan_distance(new_pos, ghost.get_position())
+            if scared > d:
+                # ghost stays scared long enough to reach it: chase
+                score += 10.0 / (d + 1)
+            else:
+                # active, or about to un-scare before Pacman gets there: avoid
+                if d <= 1:
+                    return float('-inf')
+                score -= 2.0 / d
+
+        if action == Directions.STOP:
+            score -= 10
+
+        return score
 
 def score_evaluation_function(current_game_state):
     """
