@@ -77,16 +77,28 @@ class ReflexAgent(Agent):
 
         score = successor_game_state.get_score()
 
+        # power pellets
+        capsules = current_game_state.get_capsules()
+        if capsules:
+            nearest_capsule = min(manhattan_distance(new_pos, c) for c in capsules)
+            score += 2.0 / (nearest_capsule + 1)
+        if new_pos in capsules:
+            score += 50
+
+        #food
         food_list = new_food.as_list()
         if food_list:
             nearest_food = min(manhattan_distance(new_pos, f) for f in food_list)
             score += 1/(1.5*nearest_food + 1) #avoid division by 0
 
+        #ghosts
         for ghost, scared in zip(new_ghost_states, new_scared_times):
             d = manhattan_distance(new_pos, ghost.get_position())
+            if d > 10:
+                continue
             if scared > d:
                 # ghost stays scared long enough to reach it: chase
-                score += 10.0 / (d + 1)
+                score += 30.0 / (d + 1)
             else:
                 # active, or about to un-scare before Pacman gets there: avoid
                 if d <= 1:
