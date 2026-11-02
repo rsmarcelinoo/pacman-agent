@@ -170,8 +170,41 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
-        util.raise_not_defined()
-    
+        num_agents = game_state.get_num_agents()
+
+        def minimax(state, agent_index, depth):
+            """
+            Returns the minimax value of `state` when it is `agent_index`'s turn.
+            `depth` counts how many full plies are already completed; one ply is
+            a move by Pacman followed by one move from every ghost.
+            """
+            # Terminal test: game over, or we reached the depth limit.
+            # In both cases we score the state with the evaluation function.
+            if state.is_win() or state.is_lose() or depth == self.depth:
+                return self.evaluation_function(state)
+
+            # Work out whose turn comes next. After the last ghost moves we
+            # wrap back to Pacman (index 0) and one more ply is complete.
+            next_agent = (agent_index + 1) % num_agents
+            next_depth = depth + 1 if next_agent == 0 else depth
+
+            values = [minimax(state.generate_successor(agent_index, action), next_agent, next_depth)
+                      for action in state.get_legal_actions(agent_index)]
+
+            # Pacman (agent 0) is the MAX player; every ghost is a MIN player.
+            return max(values) if agent_index == 0 else min(values)
+
+        # At the root Pacman picks the action whose successor has the highest
+        # minimax value. The first ghost (index 1) moves next, still in ply 0.
+        best_action = None
+        best_value = float('-inf')
+        for action in game_state.get_legal_actions(0):
+            value = minimax(game_state.generate_successor(0, action), 1 % num_agents,
+                            1 if num_agents == 1 else 0)
+            if value > best_value:
+                best_value, best_action = value, action
+        return best_action
+
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
@@ -183,7 +216,62 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         Returns the minimax action using self.depth and self.evaluation_function
         """
         "*** YOUR CODE HERE ***"
-        util.raise_not_defined()
+        num_agents = game_state.get_num_agents()
+
+        def alpha_beta(state, agent_index, depth, alpha, beta):
+            """
+            Minimax value of `state` with alpha-beta pruning.
+            alpha = best value MAX (Pacman) can already guarantee on the path to the root.
+            beta  = best value MIN (ghosts) can already guarantee on the path to the root.
+            Successors are generated lazily, one at a time, so that pruned
+            branches are never expanded.
+            """
+            # Same terminal test as in minimax.
+            if state.is_win() or state.is_lose() or depth == self.depth:
+                return self.evaluation_function(state)
+
+            next_agent = (agent_index + 1) % num_agents
+            next_depth = depth + 1 if next_agent == 0 else depth
+
+            if agent_index == 0:
+                # MAX node (Pacman)
+                value = float('-inf')
+                for action in state.get_legal_actions(agent_index):
+                    successor = state.generate_successor(agent_index, action)
+                    value = max(value, alpha_beta(successor, next_agent, next_depth, alpha, beta))
+                    # A MIN ancestor already has an option worth beta, so it will
+                    # never let the game reach this node: stop exploring.
+                    # Strict '>' so we do not prune on equality.
+                    if value > beta:
+                        return value
+                    alpha = max(alpha, value)
+                return value
+            else:
+                # MIN node (a ghost)
+                value = float('inf')
+                for action in state.get_legal_actions(agent_index):
+                    successor = state.generate_successor(agent_index, action)
+                    value = min(value, alpha_beta(successor, next_agent, next_depth, alpha, beta))
+                    # A MAX ancestor already has an option worth alpha, so it
+                    # will avoid this node: stop exploring.
+                    if value < alpha:
+                        return value
+                    beta = min(beta, value)
+                return value
+
+        # The root is a MAX node; we do it here so we can remember the action
+        # (not only the value). alpha is updated after every child so that the
+        # later root children benefit from pruning too.
+        alpha, beta = float('-inf'), float('inf')
+        best_action = None
+        best_value = float('-inf')
+        for action in game_state.get_legal_actions(0):
+            value = alpha_beta(game_state.generate_successor(0, action), 1 % num_agents,
+                               1 if num_agents == 1 else 0, alpha, beta)
+            if value > best_value:
+                best_value, best_action = value, action
+            alpha = max(alpha, best_value)
+        return best_action
 
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
